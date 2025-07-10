@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - MindTrack{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Profile Card -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if current_user.profile_image_url %}
+                        <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle mb-3" width="100" height="100" style="object-fit: cover;">
+                    {% else %}
+                        <div class="bg-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <h4 class="card-title">{{ current_user.get_display_name() }}</h4>
+                    {% if current_user.email %}
+                        <p class="text-muted mb-3">{{ current_user.email }}</p>
+                    {% endif %}
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h5 class="mb-0">{{ stats.total_assessments }}</h5>
+                            <small class="text-muted">Assessments</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="mb-0">{{ stats.total_journal_entries }}</h5>
+                            <small class="text-muted">Journal Entries</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="mb-0">{{ stats.member_since.strftime('%b %Y') }}</h5>
+                            <small class="text-muted">Member Since</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% if stats.last_assessment %}
+                            <div class="timeline-item">
+                                <div class="timeline-icon bg-primary">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">PHQ-9 Assessment</h6>
+                                    <p class="mb-1">Score: {{ stats.last_assessment.total_score }}/27</p>
+                                    <small class="text-muted">{{ stats.last_assessment.created_at.strftime('%B %d, %Y') }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if stats.last_journal %}
+                            <div class="timeline-item">
+                                <div class="timeline-icon bg-success">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Journal Entry</h6>
+                                    <p class="mb-1">{{ stats.last_journal.word_count }} words</p>
+                                    <small class="text-muted">{{ stats.last_journal.created_at.strftime('%B %d, %Y') }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if not stats.last_assessment and not stats.last_journal %}
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <p class="mb-0">No recent activity</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Preferences -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('update_preferences') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Notifications</h6>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="emailNotifications" 
+                                           name="email_notifications" {% if preferences.email_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="emailNotifications">
+                                        Email notifications
+                                    </label>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="reminderFrequency" class="form-label">Reminder frequency</label>
+                                    <select class="form-select" id="reminderFrequency" name="reminder_frequency">
+                                        <option value="daily" {% if preferences.reminder_frequency == 'daily' %}selected{% endif %}>Daily</option>
+                                        <option value="weekly" {% if preferences.reminder_frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                                        <option value="monthly" {% if preferences.reminder_frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Privacy</h6>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="dataSharing" 
+                                           name="data_sharing" {% if preferences.data_sharing %}checked{% endif %}>
+                                    <label class="form-check-label" for="dataSharing">
+                                        Share anonymous data for research
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="anonymousAnalytics" 
+                                           name="anonymous_analytics" {% if preferences.anonymous_analytics %}checked{% endif %}>
+                                    <label class="form-check-label" for="anonymousAnalytics">
+                                        Anonymous analytics
+                                    </label>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="timezone" class="form-label">Timezone</label>
+                                    <select class="form-select" id="timezone" name="timezone">
+                                        <option value="UTC" {% if preferences.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                                        <option value="America/New_York" {% if preferences.timezone == 'America/New_York' %}selected{% endif %}>Eastern Time</option>
+                                        <option value="America/Chicago" {% if preferences.timezone == 'America/Chicago' %}selected{% endif %}>Central Time</option>
+                                        <option value="America/Denver" {% if preferences.timezone == 'America/Denver' %}selected{% endif %}>Mountain Time</option>
+                                        <option value="America/Los_Angeles" {% if preferences.timezone == 'America/Los_Angeles' %}selected{% endif %}>Pacific Time</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Account Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Account</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Data Export</h6>
+                            <p class="text-muted">Download your data in JSON format</p>
+                            <button class="btn btn-outline-primary" onclick="exportData()">
+                                <i class="fas fa-download me-2"></i>Export Data
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Account Management</h6>
+                            <p class="text-muted">Sign out of your account</p>
+                            <a href="{{ url_for('replit_auth.logout') }}" class="btn btn-outline-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportData() {
+    // This would typically make an API call to export user data
+    alert('Data export functionality will be implemented soon!');
+}
+</script>
+{% endblock %}

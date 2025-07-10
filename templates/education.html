@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Education - MindTrack</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <div class="logo-icon me-2">
+                    <i class="fas fa-heart text-primary"></i>
+                </div>
+                <span class="fw-bold text-primary">MindTrack</span>
+            </a>
+            {% if current_user.is_authenticated %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'analysis' %}active{% endif %}" href="{{ url_for('analysis') }}">
+                            <i class="fas fa-chart-line me-1"></i>Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'journal_history' %}active{% endif %}" href="{{ url_for('journal_history') }}">
+                            <i class="fas fa-book me-1"></i>Journal
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'education' %}active{% endif %}" href="{{ url_for('education') }}">
+                            <i class="fas fa-graduation-cap me-1"></i>Education
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if current_user.profile_image_url %}
+                            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            {% endif %}
+                            <span>{{ current_user.get_display_name() }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('replit_auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="navbar-nav">
+                <a class="btn btn-outline-primary me-2" href="{{ url_for('replit_auth.login') }}">Sign In</a>
+                <a class="btn btn-primary" href="{{ url_for('replit_auth.login') }}">Get Started</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <!-- Main Content -->
+    <main id="main-content">
+        <div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="h2">Mental Health Education</h1>
+                <p class="lead text-muted">Learn about depression, mental health, and wellness strategies</p>
+            </div>
+            <!-- Understanding Depression -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-brain me-2"></i>Understanding Depression
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>Depression is a common mental health condition that affects millions of people worldwide. It's characterized by persistent feelings of sadness, hopelessness, and loss of interest in activities.</p>
+                    <h6 class="mt-4">Common Symptoms:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Persistent sadness</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Loss of interest in activities</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Changes in appetite</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Sleep disturbances</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Fatigue or low energy</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Difficulty concentrating</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Feelings of worthlessness</li>
+                                <li><i class="fas fa-check-circle text-primary me-2"></i>Thoughts of death or suicide</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- PHQ-9 Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>About the PHQ-9
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>The Patient Health Questionnaire-9 (PHQ-9) is a widely used screening tool for depression. It consists of 9 questions that correspond to the diagnostic criteria for major depressive disorder.</p>
+                    <h6 class="mt-4">Scoring:</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-success bg-opacity-10 rounded">
+                                <div class="fw-bold">0-4</div>
+                                <small>Minimal</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-warning bg-opacity-10 rounded">
+                                <div class="fw-bold">5-9</div>
+                                <small>Mild</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-warning bg-opacity-25 rounded">
+                                <div class="fw-bold">10-14</div>
+                                <small>Moderate</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-danger bg-opacity-10 rounded">
+                                <div class="fw-bold">15-27</div>
+                                <small>Severe</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Coping Strategies -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-heart me-2"></i>Coping Strategies
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Daily Practices:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-sun text-warning me-2"></i>Maintain a regular sleep schedule</li>
+                                <li class="mb-2"><i class="fas fa-dumbbell text-primary me-2"></i>Exercise regularly</li>
+                                <li class="mb-2"><i class="fas fa-apple-alt text-success me-2"></i>Eat nutritious meals</li>
+                                <li class="mb-2"><i class="fas fa-users text-info me-2"></i>Stay connected with others</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Mindfulness Techniques:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-leaf text-success me-2"></i>Practice deep breathing</li>
+                                <li class="mb-2"><i class="fas fa-om text-purple me-2"></i>Try meditation</li>
+                                <li class="mb-2"><i class="fas fa-book text-primary me-2"></i>Keep a journal</li>
+                                <li class="mb-2"><i class="fas fa-smile text-warning me-2"></i>Practice gratitude</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- When to Seek Help -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-hands-helping me-2"></i>When to Seek Professional Help
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">You should consider seeking professional help if:</h6>
+                        <ul class="mb-0">
+                            <li>Symptoms persist for more than two weeks</li>
+                            <li>Symptoms interfere with daily activities</li>
+                            <li>You have thoughts of self-harm or suicide</li>
+                            <li>You're using alcohol or drugs to cope</li>
+                            <li>Friends or family express concern</li>
+                        </ul>
+                    </div>
+                    <h6 class="mt-4">Types of Professional Help:</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-user-md fa-2x text-primary mb-2"></i>
+                                <h6>Primary Care Doctor</h6>
+                                <small class="text-muted">Initial assessment and referrals</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-comments fa-2x text-success mb-2"></i>
+                                <h6>Therapist/Counselor</h6>
+                                <small class="text-muted">Talk therapy and coping strategies</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-pills fa-2x text-info mb-2"></i>
+                                <h6>Psychiatrist</h6>
+                                <small class="text-muted">Medication management</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Crisis Resources -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-phone me-2"></i>Crisis Resources
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h6 class="alert-heading">If you're having thoughts of suicide or self-harm:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="tel:988" class="btn btn-danger btn-lg w-100 mb-2">
+                                    <i class="fas fa-phone me-2"></i>988 Suicide & Crisis Lifeline
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="tel:741741" class="btn btn-outline-danger btn-lg w-100 mb-2">
+                                    <i class="fas fa-sms me-2"></i>Text HOME to 741741
+                                </a>
+                            </div>
+                        </div>
+                        <p class="mb-0 small">These services are free, confidential, and available 24/7.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Resources -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-external-link-alt me-2"></i>Additional Resources
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Online Resources:</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="https://www.nimh.nih.gov/health/topics/depression" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-link me-2"></i>NIMH - Depression
+                                </a></li>
+                                <li><a href="https://www.mentalhealth.gov" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-link me-2"></i>MentalHealth.gov
+                                </a></li>
+                                <li><a href="https://www.nami.org" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-link me-2"></i>NAMI - National Alliance on Mental Illness
+                                </a></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Support Groups:</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="https://www.dbsalliance.org" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-link me-2"></i>Depression and Bipolar Support Alliance
+                                </a></li>
+                                <li><a href="https://www.adaa.org" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-link me-2"></i>Anxiety and Depression Association
+                                </a></li>
+                                <li><a href="https://www.psychologytoday.com" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-link me-2"></i>Psychology Today - Find a Therapist
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">MindTrack</h6>
+                    <p class="text-muted small">Your mental health companion powered by AI</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h6 class="small">Resources</h6>
+                            <ul class="list-unstyled small">
+                                <li><a href="tel:988" class="text-muted">Crisis Lifeline: 988</a></li>
+                                <li><a href="tel:741741" class="text-muted">Crisis Text: 741741</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-sm-6">
+                            <h6 class="small">Important</h6>
+                            <p class="text-muted small">This tool is not a substitute for professional medical advice.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-4 mb-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-0">&copy; 2024 MindTrack. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">Made with ❤️ for mental health awareness</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

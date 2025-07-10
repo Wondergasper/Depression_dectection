@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis - MindTrack</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <div class="logo-icon me-2">
+                    <i class="fas fa-heart text-primary"></i>
+                </div>
+                <span class="fw-bold text-primary">MindTrack</span>
+            </a>
+            {% if current_user.is_authenticated %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'analysis' %}active{% endif %}" href="{{ url_for('analysis') }}">
+                            <i class="fas fa-chart-line me-1"></i>Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'journal_history' %}active{% endif %}" href="{{ url_for('journal_history') }}">
+                            <i class="fas fa-book me-1"></i>Journal
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'education' %}active{% endif %}" href="{{ url_for('education') }}">
+                            <i class="fas fa-graduation-cap me-1"></i>Education
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if current_user.profile_image_url %}
+                            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            {% endif %}
+                            <span>{{ current_user.get_display_name() }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('replit_auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="navbar-nav">
+                <a class="btn btn-outline-primary me-2" href="{{ url_for('replit_auth.login') }}">Sign In</a>
+                <a class="btn btn-primary" href="{{ url_for('replit_auth.login') }}">Get Started</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <!-- Main Content -->
+    <main id="main-content">
+        <div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="analysis-header text-center mb-4">
+                <h1 class="h2">Mental Health Analysis</h1>
+                <p class="lead text-muted">Choose your preferred method to assess your current mental wellbeing</p>
+            </div>
+            <!-- Analysis Tabs -->
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="analysisTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if not active_tab or active_tab == 'phq9' %}active{% endif %}" 
+                                    id="phq9-tab" data-bs-toggle="tab" data-bs-target="#phq9" 
+                                    type="button" role="tab" aria-controls="phq9" aria-selected="true">
+                                <i class="fas fa-clipboard-check me-2"></i>PHQ-9 Questionnaire
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if active_tab == 'journal' %}active{% endif %}" 
+                                    id="journal-tab" data-bs-toggle="tab" data-bs-target="#journal" 
+                                    type="button" role="tab" aria-controls="journal" aria-selected="false">
+                                <i class="fas fa-book me-2"></i>Free-form Journal
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="analysisTabsContent">
+                        <!-- PHQ-9 Tab -->
+                        <div class="tab-pane fade {% if not active_tab or active_tab == 'phq9' %}show active{% endif %}" 
+                             id="phq9" role="tabpanel" aria-labelledby="phq9-tab">
+                            {% if phq9_result %}
+                                <!-- PHQ-9 Results -->
+                                <div class="results-section">
+                                    <div class="alert alert-info">
+                                        <h5 class="alert-heading">
+                                            <i class="fas fa-chart-bar me-2"></i>Assessment Results
+                                        </h5>
+                                        <p class="mb-3">
+                                            <strong>Total Score:</strong> {{ phq9_result.total_score }}/{{ phq9_result.max_score }}
+                                            <br>
+                                            <strong>Severity Level:</strong> {{ phq9_result.severity }}
+                                        </p>
+                                        <p class="mb-0">{{ phq9_result.description }}</p>
+                                    </div>
+                                    {% if phq9_result.recommendations %}
+                                        <div class="recommendations">
+                                            <h6>Recommendations:</h6>
+                                            <ul class="list-unstyled">
+                                                {% for rec in phq9_result.recommendations %}
+                                                    <li class="mb-2">
+                                                        <i class="fas fa-check-circle text-success me-2"></i>{{ rec }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary" onclick="resetAnalysis()">
+                                            <i class="fas fa-redo me-2"></i>Take Another Assessment
+                                        </button>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- PHQ-9 Form -->
+                                <div class="phq9-form">
+                                    <div class="form-intro mb-4">
+                                        <h5>Patient Health Questionnaire (PHQ-9)</h5>
+                                        <p class="text-muted">Over the last two weeks, how often have you been bothered by any of the following problems?</p>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('phq9_assessment') }}" id="phq9Form">
+                                        <div class="questions-list">
+                                            {% set questions = [
+                                                "Little interest or pleasure in doing things",
+                                                "Feeling down, depressed, or hopeless",
+                                                "Trouble falling or staying asleep, or sleeping too much",
+                                                "Feeling tired or having little energy",
+                                                "Poor appetite or overeating",
+                                                "Feeling bad about yourself or that you are a failure or have let yourself or your family down",
+                                                "Trouble concentrating on things, such as reading the newspaper or watching television",
+                                                "Moving or speaking so slowly that other people could have noticed, or the opposite being so fidgety or restless that you have been moving around a lot more than usual",
+                                                "Thoughts that you would be better off dead, or of hurting yourself"
+                                            ] %}
+                                            {% set options = [
+                                                {"value": 0, "text": "Not at all"},
+                                                {"value": 1, "text": "Several days"},
+                                                {"value": 2, "text": "More than half the days"},
+                                                {"value": 3, "text": "Nearly every day"}
+                                            ] %}
+                                            {% for question in questions %}
+                                                <div class="question-item mb-4">
+                                                    <div class="question-text fw-medium mb-3">
+                                                        {{ loop.index }}. {{ question }}
+                                                    </div>
+                                                    <div class="options">
+                                                        {% for option in options %}
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio" 
+                                                                       name="q{{ loop.index0 }}" 
+                                                                       id="q{{ loop.index0 }}_{{ option.value }}"
+                                                                       value="{{ option.value }}" required>
+                                                                <label class="form-check-label" for="q{{ loop.index0 }}_{{ option.value }}">
+                                                                    {{ option.text }}
+                                                                </label>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-chart-line me-2"></i>Analyze Results
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <!-- Journal Tab -->
+                        <div class="tab-pane fade {% if active_tab == 'journal' %}show active{% endif %}" 
+                             id="journal" role="tabpanel" aria-labelledby="journal-tab">
+                            {% if journal_result %}
+                                <!-- Journal Results -->
+                                <div class="results-section">
+                                    <div class="alert alert-info">
+                                        <h5 class="alert-heading">
+                                            <i class="fas fa-brain me-2"></i>Journal Analysis Results
+                                        </h5>
+                                        <p class="mb-3">
+                                            <strong>Word Count:</strong> {{ journal_result.word_count }} words
+                                            <br>
+                                            {% if journal_result.predicted_severity %}
+                                                <strong>Predicted Severity:</strong> {{ journal_result.predicted_severity }}
+                                                <br>
+                                            {% endif %}
+                                            {% if journal_result.confidence %}
+                                                <strong>Confidence:</strong> {{ "%.1f" | format(journal_result.confidence * 100) }}%
+                                            {% endif %}
+                                        </p>
+                                        <div class="sentiment-scores">
+                                            <h6>Sentiment Analysis:</h6>
+                                            <div class="row">
+                                                <div class="col-sm-3">
+                                                    <small class="text-muted">Positive</small>
+                                                    <div class="progress mb-2" style="height: 20px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" 
+                                                             style="width: {{ journal_result.vader_scores.positive * 100 }}%">
+                                                            {{ "%.1f" | format(journal_result.vader_scores.positive * 100) }}%
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <small class="text-muted">Negative</small>
+                                                    <div class="progress mb-2" style="height: 20px;">
+                                                        <div class="progress-bar bg-danger" role="progressbar" 
+                                                             style="width: {{ journal_result.vader_scores.negative * 100 }}%">
+                                                            {{ "%.1f" | format(journal_result.vader_scores.negative * 100) }}%
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <small class="text-muted">Neutral</small>
+                                                    <div class="progress mb-2" style="height: 20px;">
+                                                        <div class="progress-bar bg-secondary" role="progressbar" 
+                                                             style="width: {{ journal_result.vader_scores.neutral * 100 }}%">
+                                                            {{ "%.1f" | format(journal_result.vader_scores.neutral * 100) }}%
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <small class="text-muted">Compound</small>
+                                                    <div class="progress mb-2" style="height: 20px;">
+                                                        <div class="progress-bar bg-info" role="progressbar" 
+                                                             style="width: {{ ((journal_result.vader_scores.compound + 1) / 2) * 100 }}%">
+                                                            {{ "%.2f" | format(journal_result.vader_scores.compound) }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if journal_result.recommendations %}
+                                        <div class="recommendations">
+                                            <h6>Recommendations:</h6>
+                                            <ul class="list-unstyled">
+                                                {% for rec in journal_result.recommendations %}
+                                                    <li class="mb-2">
+                                                        <i class="fas fa-check-circle text-success me-2"></i>{{ rec }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary" onclick="resetJournal()">
+                                            <i class="fas fa-edit me-2"></i>Write Another Entry
+                                        </button>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Journal Form -->
+                                <div class="journal-form">
+                                    <div class="form-intro mb-4">
+                                        <h5>Express Your Thoughts</h5>
+                                        <p class="text-muted">Write about your feelings, thoughts, or experiences. Our AI will analyze your text to provide insights.</p>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('journal_analysis') }}" id="journalForm">
+                                        <div class="mb-3">
+                                            <label for="journal_text" class="form-label">How are you feeling today?</label>
+                                            <textarea class="form-control" id="journal_text" name="journal_text" 
+                                                      rows="8" placeholder="Write about your day, thoughts, feelings, or anything that's on your mind..." 
+                                                      required minlength="20"></textarea>
+                                            <div class="form-text">
+                                                <span id="charCount">0 characters</span> (minimum 20 characters)
+                                            </div>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary btn-lg" id="journalSubmit">
+                                                <i class="fas fa-brain me-2"></i>Analyze Journal Entry
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">MindTrack</h6>
+                    <p class="text-muted small">Your mental health companion powered by AI</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h6 class="small">Resources</h6>
+                            <ul class="list-unstyled small">
+                                <li><a href="tel:988" class="text-muted">Crisis Lifeline: 988</a></li>
+                                <li><a href="tel:741741" class="text-muted">Crisis Text: 741741</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-sm-6">
+                            <h6 class="small">Important</h6>
+                            <p class="text-muted small">This tool is not a substitute for professional medical advice.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-4 mb-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-0">&copy; 2024 MindTrack. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">Made with ❤️ for mental health awareness</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+</body>
+</html>
+
+

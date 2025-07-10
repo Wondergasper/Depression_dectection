@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal History - MindTrack</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <div class="logo-icon me-2">
+                    <i class="fas fa-heart text-primary"></i>
+                </div>
+                <span class="fw-bold text-primary">MindTrack</span>
+            </a>
+            {% if current_user.is_authenticated %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'analysis' %}active{% endif %}" href="{{ url_for('analysis') }}">
+                            <i class="fas fa-chart-line me-1"></i>Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'journal_history' %}active{% endif %}" href="{{ url_for('journal_history') }}">
+                            <i class="fas fa-book me-1"></i>Journal
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'education' %}active{% endif %}" href="{{ url_for('education') }}">
+                            <i class="fas fa-graduation-cap me-1"></i>Education
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if current_user.profile_image_url %}
+                            <img src="{{ current_user.profile_image_url }}" alt="Profile" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                            {% else %}
+                            <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            {% endif %}
+                            <span>{{ current_user.get_display_name() }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('replit_auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="navbar-nav">
+                <a class="btn btn-outline-primary me-2" href="{{ url_for('replit_auth.login') }}">Sign In</a>
+                <a class="btn btn-primary" href="{{ url_for('replit_auth.login') }}">Get Started</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    <!-- Main Content -->
+    <main id="main-content">
+        <div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Journal History</h1>
+                <a href="{{ url_for('analysis') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>New Entry
+                </a>
+            </div>
+            {% if entries %}
+                <div class="row">
+                    {% for entry in entries %}
+                        <div class="col-lg-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ entry.created_at.strftime('%B %d, %Y') }}</h6>
+                                        <small class="text-muted">{{ entry.word_count }} words</small>
+                                    </div>
+                                    {% if entry.severity_prediction %}
+                                        <span class="badge bg-{{ 'danger' if entry.severity_prediction == 'Severe' else 'warning' if entry.severity_prediction in ['Moderate', 'Mild'] else 'success' }}">
+                                            {{ entry.severity_prediction }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{ entry.content[:200] }}{% if entry.content|length > 200 %}...{% endif %}</p>
+                                    {% if entry.vader_compound is not none %}
+                                        <div class="sentiment-indicator mb-3">
+                                            <small class="text-muted">Sentiment Score:</small>
+                                            <div class="progress" style="height: 8px;">
+                                                <div class="progress-bar bg-{{ 'success' if entry.vader_compound > 0.1 else 'danger' if entry.vader_compound < -0.1 else 'warning' }}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ ((entry.vader_compound + 1) / 2) * 100 }}%">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">{{ "%.2f" | format(entry.vader_compound) }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="showFullEntry({{ entry.id }})">
+                                        <i class="fas fa-eye me-1"></i>View Full Entry
+                                    </button>
+                                    {% if entry.confidence_score %}
+                                        <small class="text-muted float-end">
+                                            Confidence: {{ "%.1f" | format(entry.confidence_score * 100) }}%
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book fa-4x text-muted mb-4"></i>
+                    <h3 class="h4 text-muted">No journal entries yet</h3>
+                    <p class="text-muted mb-4">Start writing to track your thoughts and feelings over time.</p>
+                    <a href="{{ url_for('analysis') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Write Your First Entry
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+        <!-- Full Entry Modal -->
+        <div class="modal fade" id="entryModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="entryModalLabel">Journal Entry</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="entryContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">MindTrack</h6>
+                    <p class="text-muted small">Your mental health companion powered by AI</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h6 class="small">Resources</h6>
+                            <ul class="list-unstyled small">
+                                <li><a href="tel:988" class="text-muted">Crisis Lifeline: 988</a></li>
+                                <li><a href="tel:741741" class="text-muted">Crisis Text: 741741</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-sm-6">
+                            <h6 class="small">Important</h6>
+                            <p class="text-muted small">This tool is not a substitute for professional medical advice.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="mt-4 mb-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-0">&copy; 2024 MindTrack. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">Made with ❤️ for mental health awareness</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+function showFullEntry(entryId) {
+    // Find the entry data
+    const entries = {{ entries | tojson }};
+    const entry = entries.find(e => e.id === entryId);
+    if (entry) {
+        document.getElementById('entryContent').innerHTML = `
+            <div class="mb-3">
+                <h6>Date: ${new Date(entry.created_at).toLocaleDateString()}</h6>
+                <small class="text-muted">${entry.word_count} words</small>
+            </div>
+            <div class="mb-3">
+                <p>${entry.content}</p>
+            </div>
+            ${entry.severity_prediction ? `
+                <div class="mb-3">
+                    <strong>Analysis:</strong> 
+                    <span class="badge bg-${entry.severity_prediction === 'Severe' ? 'danger' : entry.severity_prediction === 'Moderate' || entry.severity_prediction === 'Mild' ? 'warning' : 'success'}">
+                        ${entry.severity_prediction}
+                    </span>
+                </div>
+            ` : ''}
+        `;
+        const modal = new bootstrap.Modal(document.getElementById('entryModal'));
+        modal.show();
+    }
+}
+</script>
+</body>
+</html>
